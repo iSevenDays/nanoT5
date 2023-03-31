@@ -1,3 +1,5 @@
+import os
+
 import torch
 import datasets
 from torch.utils.data import DataLoader
@@ -15,6 +17,7 @@ from .copied_utils import (
     tokenize_function,
     DataCollatorForNI,
 )
+# from .is_irrelevant import is_irrelevant
 
 
 def get_model(args, config):
@@ -61,14 +64,38 @@ def load_dataset_splits(args):
             'en',
             streaming=True,
         )
+        #dataset.filter(lambda example: not is_irrelevant(example['text']))
 
         dataset = dataset.remove_columns(
             ['timestamp', 'url']
         )
 
+        # Custom pile
+        cache_dir = '/Volumes/AI_RW/cache'
+        from datasets import load_dataset
+        from datasets import Features
+        from datasets import interleave_datasets
+        if os.path.exists(cache_dir):
+            pile = load_dataset("EleutherAI/the_pile_deduplicated", split="train", cache_dir=cache_dir)
+            def pile_gen():
+                for example in pile:
+                    yield example
+
+            iterable_pile = IterableDataset.from_generator(
+                generator=pile_gen,
+                features=Features(pile.features),
+            )
+        else:
+            iterable_pile = load_dataset("EleutherAI/the_pile_deduplicated", split="train", streaming=True)
+
+        train_dataset = dataset["train"]
+        validation_dataset = dataset["validation"]
+
+        train_interleaved = interleave_datasets([train_dataset, iterable_pile])
+
         dataset_splits = {
-            'train': dataset['train'],
-            'test': dataset['validation'],
+            'train': train_interleaved,
+            'test': validation_dataset,
         }
 
         assert (
@@ -227,12 +254,16 @@ def get_optimizer(model, args):
             optimizer_grouped_parameters,
             lr=args.optim.base_lr,
         )
+        if args.optim.checkpoint_path != '':
+            optimizer.load_state_dict(torch.load(args.optim.checkpoint_path))
     elif args.optim.name == 'adamwscale':
         from .copied_utils import AdamWScale
         optimizer = AdamWScale(
             optimizer_grouped_parameters,
             lr=args.optim.base_lr,
         )
+        if args.optim.checkpoint_path != '':
+            optimizer.load_state_dict(torch.load(args.optim.checkpoint_path))
     elif args.optim.name == 'adafactor':
         from transformers import Adafactor
         optimizer = Adafactor(
@@ -273,6 +304,9 @@ def get_lr_scheduler(optimizer, args, logger):
             schedulers=[scheduler1, scheduler2],
             milestones=[args.optim.warmup_steps]
         )
+        if args.optim.lr_scheduler_checkpoint_path != '':
+            lr_scheduler.load_state_dict(torch.load(args.optim.lr_scheduler_checkpoint_path))
+            logger.log_message('Loaded lr_scheduler checkpoint')
     elif args.optim.lr_scheduler == 'legacy':
         import math
         from torch.optim.lr_scheduler import (

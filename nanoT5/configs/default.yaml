@@ -20,7 +20,7 @@ data:
   input_length: 512
   mlm_probability: 0.15
   mean_noise_span_length: 3.0
-  num_workers: 8
+  num_workers: 0
 
 optim:
   name: adamwscale
@@ -36,11 +36,11 @@ optim:
   final_cosine: 1e-5
 
 eval:
-  every_steps: 100000 # Don't eval
-  steps: 500
+  every_steps: 300 # Don't eval
+  steps: 100
 
 checkpoint:
-  every_steps: 30000
+  every_steps: 500
 
 logging:
   neptune: false

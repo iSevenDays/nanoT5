@@ -14,7 +14,7 @@ def check_args_and_env(args):
     assert args.eval.every_steps % args.logging.every_steps == 0
 
     if args.device == 'gpu':
-        assert torch.cuda.is_available(), 'We use GPU to train/eval the model'
+        assert torch.cuda.is_available() or torch.backends.mps.is_available(), 'We use GPU to train/eval the model'
 
     assert not (args.eval_only and args.predict_only)
 
