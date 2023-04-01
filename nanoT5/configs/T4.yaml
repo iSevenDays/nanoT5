@@ -4,6 +4,9 @@ defaults:
 optim:
   grad_acc: 18
 
+checkpoint:
+  path: /content/drive/MyDrive/t5-checkpoints
+
 hydra:
   job:
     chdir: False
