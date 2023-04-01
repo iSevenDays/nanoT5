@@ -17,7 +17,17 @@ from .copied_utils import (
     tokenize_function,
     DataCollatorForNI,
 )
+
+
 # from .is_irrelevant import is_irrelevant
+
+def get_device(use_gpu: bool):
+    if use_gpu:
+        if torch.cuda.is_available():
+            return 'cuda'
+        if torch.backends.mps.is_available():
+            return 'mps'
+    return 'cpu'
 
 
 def get_model(args, config):
@@ -25,7 +35,7 @@ def get_model(args, config):
         model = T5ForConditionalGeneration(
             config,
         )
-        model.load_state_dict(torch.load(args.model.checkpoint_path))
+        model.load_state_dict(torch.load(args.model.checkpoint_path, map_location=get_device(args.device == 'gpu')))
     elif args.model.random_init:
         model = T5ForConditionalGeneration(
             config,
@@ -64,7 +74,7 @@ def load_dataset_splits(args):
             'en',
             streaming=True,
         )
-        #dataset.filter(lambda example: not is_irrelevant(example['text']))
+        # dataset.filter(lambda example: not is_irrelevant(example['text']))
 
         dataset = dataset.remove_columns(
             ['timestamp', 'url']
@@ -77,6 +87,7 @@ def load_dataset_splits(args):
         from datasets import interleave_datasets
         if os.path.exists(cache_dir):
             pile = load_dataset("EleutherAI/the_pile_deduplicated", split="train", cache_dir=cache_dir)
+
             def pile_gen():
                 for example in pile:
                     yield example
@@ -99,7 +110,7 @@ def load_dataset_splits(args):
         }
 
         assert (
-            dataset['train'].n_shards == 1024
+                dataset['train'].n_shards == 1024
         ), "We want to have many shards for efficient processing with num_workes in PyTorch dataloader"
     elif args.mode == 'ft':
         dataset_splits = datasets.load_dataset(
@@ -120,7 +131,6 @@ def process_dataset(dataset_splits, args, tokenizer):
         final_datasets = {}
 
         for split, dataset_split in dataset_splits.items():
-
             # We increase the input_length, because instead of masking tokens T5 replaces
             # masked spans with a single token, therefore to avoid padding we need to have
             # longer sequences at the start, before masking
@@ -255,7 +265,7 @@ def get_optimizer(model, args):
             lr=args.optim.base_lr,
         )
         if args.optim.checkpoint_path != '':
-            optimizer.load_state_dict(torch.load(args.optim.checkpoint_path))
+            optimizer.load_state_dict(torch.load(args.optim.checkpoint_path, map_location=get_device(args.device == 'gpu')))
     elif args.optim.name == 'adamwscale':
         from .copied_utils import AdamWScale
         optimizer = AdamWScale(
@@ -263,7 +273,7 @@ def get_optimizer(model, args):
             lr=args.optim.base_lr,
         )
         if args.optim.checkpoint_path != '':
-            optimizer.load_state_dict(torch.load(args.optim.checkpoint_path))
+            optimizer.load_state_dict(torch.load(args.optim.checkpoint_path, map_location=get_device(args.device == 'gpu')))
     elif args.optim.name == 'adafactor':
         from transformers import Adafactor
         optimizer = Adafactor(
@@ -305,7 +315,7 @@ def get_lr_scheduler(optimizer, args, logger):
             milestones=[args.optim.warmup_steps]
         )
         if args.optim.lr_scheduler_checkpoint_path != '':
-            lr_scheduler.load_state_dict(torch.load(args.optim.lr_scheduler_checkpoint_path))
+            lr_scheduler.load_state_dict(torch.load(args.optim.lr_scheduler_checkpoint_path, map_location=get_device(args.device == 'gpu')))
             logger.log_message('Loaded lr_scheduler checkpoint')
     elif args.optim.lr_scheduler == 'legacy':
         import math
@@ -331,7 +341,7 @@ def get_lr_scheduler(optimizer, args, logger):
         scheduler2 = LinearLR(
             optimizer,
             start_factor=(
-                min(1e-2, 1.0 / math.sqrt(num_steps_optimizer1)) / args.optim.base_lr
+                    min(1e-2, 1.0 / math.sqrt(num_steps_optimizer1)) / args.optim.base_lr
             ),
             end_factor=0,
             total_iters=iters_left_for_optimizer2,

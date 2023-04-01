@@ -1,3 +1,5 @@
+import os
+
 import torch
 import time
 import evaluate
@@ -10,7 +12,11 @@ def maybe_save_checkpoint(accelerator, args):
         args.current_train_step > args.optim.total_steps
         or args.current_train_step % args.checkpoint.every_steps == 0
     ):
-        output_dir = f'checkpoint-{args.mode}-{args.current_train_step}'
+        if args.checkpoint.save_step:
+            output_dir = os.path.join(args.checkpoint.path, f'{args.mode}-{args.current_train_step}')
+        else:
+            output_dir = os.path.join(args.checkpoint.path, f'{args.mode}')
+        os.makedirs(output_dir, exist_ok=True)
         accelerator.save_state(output_dir=output_dir)
 
 

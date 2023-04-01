@@ -43,6 +43,8 @@ eval:
 
 checkpoint:
   every_steps: 500
+  path: ./checkpoint
+  save_step: False # when True, saves every step instead of the latest checkpoint
 
 logging:
   neptune: false
