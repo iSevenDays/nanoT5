@@ -7,7 +7,6 @@ import torch
 import time
 
 from .utils import (
-from omegaconf import OmegaConf
     setup_basics,
     train,
     predict,
