@@ -1,3 +1,5 @@
+import json
+import os
 from accelerate import Accelerator
 from omegaconf import open_dict
 import hydra
@@ -5,6 +7,7 @@ import torch
 import time
 
 from .utils import (
+from omegaconf import OmegaConf
     setup_basics,
     train,
     predict,
