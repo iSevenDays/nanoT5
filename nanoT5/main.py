@@ -44,10 +44,23 @@ def main(args):
     if args.model.compile:
         model = torch.compile(model)
 
-    with open_dict(args):
-        args.current_train_step = 1
-        args.current_epoch = 1
-        args.last_log = time.time()
+    def resume_checkpoint(args):
+        checkpoint_dir = args.checkpoint.path
+        checkpoint_path = os.path.join(checkpoint_dir, "checkpoint.json")
+        with open(checkpoint_path, "r") as f:
+            checkpoint = json.load(f)
+        with open_dict(args):
+            try:
+                args.current_train_step = checkpoint["current_train_step"]
+                args.current_epoch = checkpoint["current_epoch"]
+                args.last_log = checkpoint["last_log"]
+            except Exception as exc:
+                print(f"Can't load checkpoint config, will use default values instead, error: {exc}")
+                args.current_train_step = 1
+                args.current_epoch = 1
+                args.last_log = time.time()
+
+    resume_checkpoint(args)
 
     if args.eval_only:
         model.eval()

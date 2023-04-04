@@ -1,0 +1,14 @@
+defaults:
+  - default
+
+optim:
+  grad_acc: 12
+
+checkpoint:
+  every_steps: 40
+
+hydra:
+  job:
+    chdir: False
+  run:
+    dir: ./logs

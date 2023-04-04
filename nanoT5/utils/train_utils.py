@@ -1,3 +1,4 @@
+import json
 import os
 
 import torch
@@ -18,6 +19,19 @@ def maybe_save_checkpoint(accelerator, args):
             output_dir = os.path.join(args.checkpoint.path, f'{args.mode}')
         os.makedirs(output_dir, exist_ok=True)
         accelerator.save_state(output_dir=output_dir)
+        save_checkpoint_config(args)
+
+
+def save_checkpoint_config(args):
+    checkpoint_dir = args.checkpoint.path
+    os.makedirs(checkpoint_dir, exist_ok=True)
+    checkpoint_path = os.path.join(checkpoint_dir, "checkpoint.json")
+    with open(checkpoint_path, "w") as f:
+        json.dump({
+            "current_train_step": args.current_train_step,
+            "current_epoch": args.current_epoch,
+            "last_log": args.last_log
+        }, f)
 
 
 def maybe_eval_predict(model, dataloader, logger, args, tokenizer):

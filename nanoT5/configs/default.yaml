@@ -30,12 +30,12 @@ optim:
   epochs: -1 # If it's > 0 it overwrites total_steps
   warmup_steps: 10000
   lr_scheduler: cosine
-  lr_scheduler_checkpoint_path: '/Users/seven/Documents/ai/nanoT5/nanoT5/checkpoint/scheduler.bin'
+  lr_scheduler_checkpoint_path: '/Users/seven/Documents/ai/nanoT5/nanoT5/checkpoint/pt/scheduler.bin'
   weight_decay: 0.0
   grad_clip: 1.0
   grad_acc: 2
   final_cosine: 1e-5
-  checkpoint_path: '/Users/seven/Documents/ai/nanoT5/nanoT5/checkpoint/optimizer.bin'
+  checkpoint_path: '/Users/seven/Documents/ai/nanoT5/nanoT5/checkpoint/pt/optimizer.bin'
 
 eval:
   every_steps: 300 # Don't eval
@@ -53,6 +53,7 @@ logging:
     api_token:
     tags:
   every_steps: 100
+  run_id: 'NAN-43'
   grad_l2: true
   weights_l2: true
 

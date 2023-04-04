@@ -59,8 +59,10 @@ class Logger:
             neptune_logger = neptune.init_run(
                 project=args.logging.neptune_creds.project,
                 api_token=args.logging.neptune_creds.api_token,
+                with_id=args.logging.run_id,
                 tags=[str(item) for item in args.logging.neptune_creds.tags.split(",")],
             )
+            self.log_message(f'Neptune run_id: {args.logging.run_id}')
         else:
             neptune_logger = None
 
@@ -68,7 +70,8 @@ class Logger:
 
         with open_dict(args):
             if neptune_logger is not None:
-                args.neptune_id = neptune_logger["sys/id"].fetch()
+                args.neptune_id = args.logging.run_id or neptune_logger["sys/id"].fetch()
+                self.log_message(f'Neptune run_id updated: {args.neptune_id}')
 
     def log_args(self, args):
         if self.neptune_logger is not None:
