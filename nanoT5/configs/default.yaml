@@ -14,7 +14,7 @@ model:
   checkpoint_path: ''
   dropout: 0.0
   random_init: true
-  compile: false # Pytorch 2.0
+  compile: true # Pytorch 2.0
 
 data:
   input_length: 512

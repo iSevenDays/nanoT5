@@ -1,6 +1,9 @@
 defaults:
   - default
 
+model:
+  compile: false # Pytorch 2.0
+
 optim:
   grad_acc: 12
 
