@@ -1,0 +1,19 @@
+defaults:
+  - default
+
+optim:
+  grad_acc: 6
+
+checkpoint:
+  path: /content/drive/MyDrive/t5-checkpoints
+  every_steps: 500
+
+eval:
+  every_steps: 1000
+  steps: 200
+
+hydra:
+  job:
+    chdir: False
+  run:
+    dir: ./logs
